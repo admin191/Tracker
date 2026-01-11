@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>设备信息检测</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 10px;
+            color: #1d1d1f;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #86868b;
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        .permission-section {
+            background: #f5f5f7;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .permission-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #1d1d1f;
+        }
+
+        .permission-btn {
+            background: linear-gradient(135deg, #007aff 0%, #0056cc 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        }
+
+        .permission-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 122, 255, 0.4);
+        }
+
+        .permission-btn:active {
+            transform: translateY(0);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 122, 255, 0.2);
+            border-top: 4px solid #007aff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info-section {
+            display: none;
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e5e5ea;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .info-card:nth-child(1) { animation-delay: 0.1s; }
+        .info-card:nth-child(2) { animation-delay: 0.2s; }
+        .info-card:nth-child(3) { animation-delay: 0.3s; }
+        .info-card:nth-child(4) { animation-delay: 0.4s; }
+        .info-card:nth-child(5) { animation-delay: 0.5s; }
+        .info-card:nth-child(6) { animation-delay: 0.6s; }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.2s ease;
+        }
+
+        .info-row:hover {
+            background: rgba(0, 122, 255, 0.05);
+            padding-left: 10px;
+            border-radius: 8px;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-size: 15px;
+            font-weight: 500;
+            color: #86868b;
+            transition: all 0.3s ease;
+        }
+
+        .info-row:hover .info-label {
+            color: #007aff;
+        }
+
+        .info-value {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1d1d1f;
+            text-align: right;
+            transition: all 0.3s ease;
+        }
+
+        .info-row:hover .info-value {
+            color: #0056cc;
+        }
+
+        .location-card {
+            background: linear-gradient(135deg, #34c759 0%, #28a745 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .location-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .location-coords {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .map-link {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .map-link:hover {
+            text-decoration: underline;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #1d1d1f;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #86868b;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>设备信息检测</h1>
+        <p class="subtitle">获取您的设备详细信息和位置</p>
+
+        <div class="permission-section" id="permissionSection">
+            <div class="permission-title">需要位置权限</div>
+            <p>请允许获取您的位置信息以完成检测</p>
+            <button class="permission-btn" onclick="getDeviceInfo()">允许并获取信息</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在获取设备信息...</p>
+        </div>
+
+        <div class="info-section" id="infoSection">
+            <div class="location-card" id="locationCard">
+                <div class="location-title">位置信息</div>
+                <div class="location-coords" id="coords">--</div>
+                <a href="#" class="map-link" id="mapLink" target="_blank">在高德地图上查看</a>
+            </div>
+
+            <div class="section-title">设备信息</div>
+            <div class="info-card">
+                <div class="info-row">
+                    <span class="info-label">操作系统</span>
+                    <span class="info-value" id="os">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">平台</span>
+                    <span class="info-value" id="platform">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">CPU核心数</span>
+                    <span class="info-value" id="cpuCores">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">设备内存</span>
+                    <span class="info-value" id="deviceMemory">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">颜色深度</span>
+                    <span class="info-value" id="colorDepth">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">像素比</span>
+                    <span class="info-value" id="pixelRatio">--</span>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-row">
+                    <span class="info-label">GPU厂商</span>
+                    <span class="info-value" id="gpuVendor">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">GPU型号</span>
+                    <span class="info-value" id="gpu">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">屏幕分辨率</span>
+                    <span class="info-value" id="resolution">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">浏览器</span>
+                    <span class="info-value" id="browser">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">浏览器语言</span>
+                    <span class="info-value" id="language">--</span>
+                </div>
+            </div>
+
+            <div class="section-title">网络信息</div>
+            <div class="info-card">
+                <div class="info-row">
+                    <span class="info-label">公网IP</span>
+                    <span class="info-value" id="publicIp">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">国家/地区</span>
+                    <span class="info-value" id="country">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">省份/州</span>
+                    <span class="info-value" id="region">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">城市</span>
+                    <span class="info-value" id="city">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">互联网服务提供商</span>
+                    <span class="info-value" id="isp">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">时区</span>
+                    <span class="info-value" id="timezone">--</span>
+                </div>
+            </div>
+
+            <div class="section-title">浏览器特性</div>
+            <div class="info-card">
+                <div class="info-row">
+                    <span class="info-label">在线状态</span>
+                    <span class="info-value" id="online">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Cookie启用</span>
+                    <span class="info-value" id="cookieEnabled">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">触摸支持</span>
+                    <span class="info-value" id="touchSupport">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">最大触摸点数</span>
+                    <span class="info-value" id="maxTouchPoints">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">本地存储</span>
+                    <span class="info-value" id="localStorage">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">会话存储</span>
+                    <span class="info-value" id="sessionStorage">--</span>
+                </div>
+            </div>
+
+            <div class="section-title">高级信息</div>
+            <div class="info-card">
+                <div class="info-row">
+                    <span class="info-label">用户代理</span>
+                    <span class="info-value" id="userAgent">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">视口大小</span>
+                    <span class="info-value" id="viewport">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">可用屏幕</span>
+                    <span class="info-value" id="availScreen">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">设备类型</span>
+                    <span class="info-value" id="deviceType">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">地理定位精度</span>
+                    <span class="info-value" id="geolocationAccuracy">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">GPU渲染器</span>
+                    <span class="info-value" id="gpuRenderer">--</span>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-row">
+                    <span class="info-label">语言偏好</span>
+                    <span class="info-value" id="languagePreferences">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">电池状态</span>
+                    <span class="info-value" id="batteryStatus">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">充电状态</span>
+                    <span class="info-value" id="chargingStatus">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">设备方向</span>
+                    <span class="info-value" id="deviceOrientation">--</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>设备信息</p>
+        </div>
+    </div>
+
+    <script>
+        async function getDeviceInfo() {
+            // 显示加载状态
+            const permissionSection = document.getElementById('permissionSection');
+            const loading = document.getElementById('loading');
+            const infoSection = document.getElementById('infoSection');
+            
+            permissionSection.style.display = 'none';
+            loading.style.display = 'block';
+
+            try {
+                // 快速获取基本设备信息（不依赖位置）
+                const basicDeviceInfo = {
+                    os: navigator.platform,
+                    platform: navigator.platform,
+                    cpuCores: navigator.hardwareConcurrency || 'N/A',
+                    deviceMemory: navigator.deviceMemory || 'Not Available',
+                    colorDepth: screen.colorDepth,
+                    pixelRatio: window.devicePixelRatio,
+                    gpuVendor: 'N/A',
+                    gpu: 'N/A',
+                    resolution: `${screen.width}x${screen.height}`,
+                    browser: navigator.userAgent,
+                    language: navigator.language || navigator.userLanguage,
+                    online: navigator.onLine,
+                    cookieEnabled: navigator.cookieEnabled,
+                    touchSupport: 'ontouchstart' in window,
+                    maxTouchPoints: navigator.maxTouchPoints || 0,
+                    localStorage: typeof Storage !== 'undefined' ? 'Supported' : 'Not Supported',
+                    sessionStorage: typeof Storage !== 'undefined' ? 'Supported' : 'Not Supported',
+                    viewport: `${window.innerWidth}x${window.innerHeight}`,
+                    availScreen: `${screen.availWidth}x${screen.availHeight}`,
+                    userAgent: navigator.userAgent,
+                    languagePreferences: navigator.languages ? navigator.languages.join(', ') : 'N/A',
+                    deviceOrientation: window.orientation || 'Portrait',
+                    deviceType: 'Unknown',
+                    // 默认位置值，避免等待
+                    latitude: 'N/A',
+                    longitude: 'N/A',
+                    geolocationAccuracy: 0
+                };
+
+                // 检测设备类型
+                const ua = navigator.userAgent;
+                if (ua.match(/Mobile|Android|iP(hone|od|ad)|BlackBerry|IEMobile|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/)) {
+                    basicDeviceInfo.deviceType = 'Mobile';
+                } else if (ua.match(/Tablet|iPad|PlayBook|Silk/)) {
+                    basicDeviceInfo.deviceType = 'Tablet';
+                } else {
+                    basicDeviceInfo.deviceType = 'Desktop';
+                }
+
+                // 并行执行所有异步操作，不等待位置获取
+                const promises = [];
+                
+                // 1. 快速获取IP信息
+                const ipInfoPromise = fetch('/api/ip-info', { timeout: 3000 })
+                    .then(response => response.json())
+                    .catch(() => ({
+                        public_ip: 'N/A',
+                        country: 'N/A',
+                        region: 'N/A',
+                        city: 'N/A',
+                        loc: 'N/A',
+                        timezone: 'N/A',
+                        isp: 'N/A'
+                    }));
+                promises.push(ipInfoPromise);
+
+                // 2. 快速获取GPU信息
+                const gpuInfoPromise = new Promise(resolve => {
+                    const canvas = document.createElement('canvas');
+                    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                    const gpuInfo = { vendor: 'N/A', renderer: 'N/A' };
+                    if (gl) {
+                        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                        if (debugInfo) {
+                            gpuInfo.vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                            gpuInfo.renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                        }
+                    }
+                    resolve(gpuInfo);
+                });
+                promises.push(gpuInfoPromise);
+
+                // 3. 快速获取电池信息
+                const batteryInfoPromise = new Promise(resolve => {
+                    if ('getBattery' in navigator) {
+                        navigator.getBattery().then(battery => {
+                            resolve({
+                                level: `${Math.round(battery.level * 100)}%`,
+                                charging: battery.charging
+                            });
+                        }).catch(() => resolve({ level: 'Not Available', charging: 'Not Available' }));
+                    } else {
+                        resolve({ level: 'Not Available', charging: 'Not Available' });
+                    }
+                });
+                promises.push(batteryInfoPromise);
+
+                // 4. 异步获取位置信息（不阻塞主流程）
+                let lat = 'N/A';
+                let lng = 'N/A';
+                let accuracy = 0;
+                
+                // 使用setTimeout确保位置获取不会阻塞太久
+                const locationPromise = new Promise((resolve) => {
+                    let hasResolved = false;
+                    
+                    // 5秒后自动返回，避免无限等待
+                    const timeoutId = setTimeout(() => {
+                        if (!hasResolved) {
+                            hasResolved = true;
+                            console.warn('位置获取超时，使用默认值');
+                            resolve({ lat: 'N/A', lng: 'N/A', accuracy: 0 });
+                        }
+                    }, 5000);
+                    
+                    // 尝试获取位置，但不等待结果
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            (pos) => {
+                                if (!hasResolved) {
+                                    hasResolved = true;
+                                    clearTimeout(timeoutId);
+                                    lat = pos.coords.latitude.toFixed(6);
+                                    lng = pos.coords.longitude.toFixed(6);
+                                    accuracy = pos.coords.accuracy;
+                                    console.log('位置获取成功:', lat, lng);
+                                    resolve({ lat, lng, accuracy });
+                                }
+                            },
+                            (err) => {
+                                if (!hasResolved) {
+                                    hasResolved = true;
+                                    clearTimeout(timeoutId);
+                                    console.warn('位置获取失败:', err.message);
+                                    resolve({ lat: 'N/A', lng: 'N/A', accuracy: 0 });
+                                }
+                            },
+                            {
+                                enableHighAccuracy: false,
+                                timeout: 4000,
+                                maximumAge: 300000
+                            }
+                        );
+                    } else {
+                        hasResolved = true;
+                        clearTimeout(timeoutId);
+                        console.warn('浏览器不支持地理定位');
+                        resolve({ lat: 'N/A', lng: 'N/A', accuracy: 0 });
+                    }
+                });
+                promises.push(locationPromise);
+
+                // 等待所有异步操作完成
+                const [ipInfo, gpuInfo, batteryInfo, locationInfo] = await Promise.all(promises);
+
+                // 更新位置信息（如果获取成功）
+                basicDeviceInfo.latitude = locationInfo.lat;
+                basicDeviceInfo.longitude = locationInfo.lng;
+                basicDeviceInfo.geolocationAccuracy = locationInfo.accuracy;
+
+                // 更新GPU和电池信息
+                basicDeviceInfo.gpuVendor = gpuInfo.vendor;
+                basicDeviceInfo.gpu = gpuInfo.renderer;
+                basicDeviceInfo.batteryLevel = batteryInfo.level;
+                basicDeviceInfo.charging = batteryInfo.charging;
+
+                // 合并所有信息
+                const allInfo = {
+                    ...basicDeviceInfo,
+                    ...ipInfo
+                };
+
+                // 立即显示信息，不等待日志保存
+                displayInfo(allInfo);
+
+                // 异步保存日志，不阻塞UI
+                fetch('/api/save-log', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(allInfo)
+                }).catch(err => {
+                    console.warn('日志保存失败:', err);
+                });
+
+            } catch (error) {
+                console.error('获取设备信息失败:', error);
+            } finally {
+                // 确保加载状态总是会隐藏，加快UI响应
+                loading.style.display = 'none';
+                infoSection.style.display = 'block';
+            }
+        }
+
+        // WGS-84转GCJ-02坐标转换函数
+        function wgs84ToGcj02(lng, lat) {
+            const PI = 3.1415926535897932384626;
+            const a = 6378137.0;
+            const ee = 0.00669342162296594323;
+            
+            if (isNaN(lng) || isNaN(lat)) {
+                return { lng, lat };
+            }
+            
+            if (outOfChina(lng, lat)) {
+                return { lng, lat };
+            }
+            
+            let dLat = transformLat(lng - 105.0, lat - 35.0);
+            let dLng = transformLng(lng - 105.0, lat - 35.0);
+            const radLat = lat / 180.0 * PI;
+            let magic = Math.sin(radLat);
+            magic = 1 - ee * magic * magic;
+            const sqrtMagic = Math.sqrt(magic);
+            dLat = (dLat * 180.0) / ((a * (1 - ee)) / (magic * sqrtMagic) * PI);
+            dLng = (dLng * 180.0) / (a / sqrtMagic * Math.cos(radLat) * PI);
+            
+            const gcjLat = lat + dLat;
+            const gcjLng = lng + dLng;
+            
+            return { lng: gcjLng, lat: gcjLat };
+        }
+        
+        function transformLat(x, y) {
+            const PI = 3.1415926535897932384626;
+            let ret = -100.0 + 2.0 * x + 3.0 * y + 0.2 * y * y + 0.1 * x * y + 0.2 * Math.sqrt(Math.abs(x));
+            ret += (20.0 * Math.sin(6.0 * x * PI) + 20.0 * Math.sin(2.0 * x * PI)) * 2.0 / 3.0;
+            ret += (20.0 * Math.sin(y * PI) + 40.0 * Math.sin(y / 3.0 * PI)) * 2.0 / 3.0;
+            ret += (160.0 * Math.sin(y / 12.0 * PI) + 320 * Math.sin(y * PI / 30.0)) * 2.0 / 3.0;
+            return ret;
+        }
+        
+        function transformLng(x, y) {
+            const PI = 3.1415926535897932384626;
+            let ret = 300.0 + x + 2.0 * y + 0.1 * x * x + 0.1 * x * y + 0.1 * Math.sqrt(Math.abs(x));
+            ret += (20.0 * Math.sin(6.0 * x * PI) + 20.0 * Math.sin(2.0 * x * PI)) * 2.0 / 3.0;
+            ret += (20.0 * Math.sin(x * PI) + 40.0 * Math.sin(x / 3.0 * PI)) * 2.0 / 3.0;
+            ret += (150.0 * Math.sin(x / 12.0 * PI) + 300.0 * Math.sin(x / 30.0 * PI)) * 2.0 / 3.0;
+            return ret;
+        }
+        
+        function outOfChina(lng, lat) {
+            return (lng < 72.004 || lng > 137.8347) || (lat < 0.8293 || lat > 55.8271);
+        }
+        
+        function displayInfo(info) {
+            let amapUrl = '#';
+            
+            // 确保info对象和属性存在
+            info = info || {};
+            
+            // 优先使用浏览器获取的经纬度，若不可用则使用IP信息中的经纬度
+            let latitude = info.latitude || 'N/A';
+            let longitude = info.longitude || 'N/A';
+            
+            // 如果浏览器经纬度不可用，尝试使用IP信息中的经纬度
+            if ((latitude === 'N/A' || longitude === 'N/A') && info.loc) {
+                const locParts = info.loc.split(',');
+                if (locParts.length === 2) {
+                    latitude = locParts[0];
+                    longitude = locParts[1];
+                }
+            }
+            
+            // 只有当经纬度有效时才生成地图链接
+            if (longitude !== 'N/A' && longitude !== undefined && longitude !== null && longitude !== '' && 
+                latitude !== 'N/A' && latitude !== undefined && latitude !== null && latitude !== '') {
+                const wgsLng = parseFloat(longitude);
+                const wgsLat = parseFloat(latitude);
+                
+                // 检查是否为有效数字
+                if (!isNaN(wgsLng) && !isNaN(wgsLat)) {
+                    // 转换WGS-84坐标为GCJ-02坐标（高德地图使用的坐标系）
+                    const gcjCoords = wgs84ToGcj02(wgsLng, wgsLat);
+                    // 使用高德地图链接格式
+                    amapUrl = `https://uri.amap.com/marker?position=${gcjCoords.lng.toFixed(6)},${gcjCoords.lat.toFixed(6)}&name=当前位置&coordinate=gaode`;
+                }
+            }
+            
+            // 更新位置信息
+            document.getElementById('coords').textContent = `${latitude}, ${longitude}`;
+            document.getElementById('mapLink').href = amapUrl;
+            // 当位置不可用时，禁用地图链接的点击事件
+            if (longitude === 'N/A' || longitude === undefined || longitude === null || longitude === '' || 
+                latitude === 'N/A' || latitude === undefined || latitude === null || latitude === '') {
+                document.getElementById('mapLink').onclick = (e) => {
+                    e.preventDefault();
+                    alert('位置信息不可用，无法打开地图');
+                };
+            } else {
+                document.getElementById('mapLink').onclick = null;
+            }
+
+            // 更新设备信息
+            document.getElementById('os').textContent = info.os || 'N/A';
+            document.getElementById('platform').textContent = info.platform || 'N/A';
+            document.getElementById('cpuCores').textContent = info.cpuCores || 'N/A';
+            document.getElementById('deviceMemory').textContent = info.deviceMemory ? `${info.deviceMemory} GB` : 'Not Available';
+            document.getElementById('colorDepth').textContent = info.colorDepth ? `${info.colorDepth} bits` : 'N/A';
+            document.getElementById('pixelRatio').textContent = info.pixelRatio || 'N/A';
+            document.getElementById('gpuVendor').textContent = info.gpuVendor || 'N/A';
+            document.getElementById('gpu').textContent = info.gpu || 'N/A';
+            document.getElementById('resolution').textContent = info.resolution || 'N/A';
+            document.getElementById('browser').textContent = info.browser || 'N/A';
+            document.getElementById('language').textContent = info.language || 'N/A';
+
+            // 更新IP信息
+            document.getElementById('publicIp').textContent = info.public_ip || 'N/A';
+            document.getElementById('country').textContent = info.country || 'N/A';
+            document.getElementById('region').textContent = info.region || 'N/A';
+            document.getElementById('city').textContent = info.city || 'N/A';
+            document.getElementById('isp').textContent = info.isp || 'N/A';
+            document.getElementById('timezone').textContent = info.timezone || 'N/A';
+
+            // 更新浏览器特性
+            document.getElementById('online').textContent = info.online ? '在线' : '离线';
+            document.getElementById('cookieEnabled').textContent = info.cookieEnabled ? '启用' : '禁用';
+            document.getElementById('touchSupport').textContent = info.touchSupport ? '支持' : '不支持';
+            document.getElementById('maxTouchPoints').textContent = info.maxTouchPoints || 'N/A';
+            document.getElementById('localStorage').textContent = info.localStorage || 'N/A';
+            document.getElementById('sessionStorage').textContent = info.sessionStorage || 'N/A';
+
+            // 更新高级信息
+            document.getElementById('userAgent').textContent = info.userAgent || 'N/A';
+            document.getElementById('viewport').textContent = info.viewport || 'N/A';
+            document.getElementById('availScreen').textContent = info.availScreen || 'N/A';
+            document.getElementById('deviceType').textContent = info.deviceType || 'N/A';
+            document.getElementById('geolocationAccuracy').textContent = info.geolocationAccuracy ? `${info.geolocationAccuracy} 米` : 'N/A';
+            document.getElementById('gpuRenderer').textContent = `${info.gpuVendor || 'N/A'} ${info.gpu || 'N/A'}`;
+            document.getElementById('languagePreferences').textContent = info.languagePreferences || 'N/A';
+            document.getElementById('batteryStatus').textContent = info.batteryLevel || 'Not Available';
+            document.getElementById('chargingStatus').textContent = info.charging ? '充电中' : '未充电';
+            document.getElementById('deviceOrientation').textContent = info.deviceOrientation || 'N/A';
+        }
+
+        // 添加页面加载动画
+        window.addEventListener('load', () => {
+            const container = document.querySelector('.container');
+            container.style.opacity = '0';
+            container.style.transform = 'scale(0.95)';
+            container.style.transition = 'all 0.5s ease';
+            
+            setTimeout(() => {
+                container.style.opacity = '1';
+                container.style.transform = 'scale(1)';
+            }, 100);
+        });
+        </script>
+</body>
+</html>
