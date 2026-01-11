@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>后台管理 - 设备信息检测</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 10px;
+            color: #1d1d1f;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #86868b;
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e5e5ea;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #007aff 0%, #0056cc 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 122, 255, 0.4);
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, #ff3b30 0%, #ff3b30 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3);
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 59, 48, 0.4);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e5e5ea;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1d1d1f;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #86868b;
+        }
+
+        .logs-section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1d1d1f;
+        }
+
+        .logs-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .log-item {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e5e5ea;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .log-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .log-time {
+            font-size: 14px;
+            font-weight: 600;
+            color: #007aff;
+        }
+
+        .log-ip {
+            font-size: 14px;
+            color: #86868b;
+        }
+
+        .log-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            font-size: 14px;
+        }
+
+        .log-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .log-label {
+            color: #86868b;
+        }
+
+        .log-value {
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        .map-link {
+            color: #007aff;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .map-link:hover {
+            text-decoration: underline;
+        }
+
+        .log-details {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #f0f0f0;
+            display: none;
+        }
+
+        .log-item.active .log-details {
+            display: block;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .detail-label {
+            font-size: 13px;
+            color: #86868b;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1d1d1f;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .pagination-btn {
+            background: white;
+            border: 1px solid #e5e5ea;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .pagination-btn:hover {
+            background: #f5f5f7;
+        }
+
+        .pagination-btn.active {
+            background: linear-gradient(135deg, #007aff 0%, #0056cc 100%);
+            color: white;
+            border-color: #007aff;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #86868b;
+            font-size: 14px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e5ea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>后台管理</h1>
+        <p class="subtitle">查看设备信息访问日志</p>
+
+        <div class="header">
+            <h2>访问日志</h2>
+            <div class="header-actions">
+                <button class="refresh-btn" onclick="window.location.reload()">刷新日志</button>
+                <button class="logout-btn" onclick="window.location.href='/admin/logout'">退出登录</button>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value">{{ total_logs }}</div>
+                <div class="stat-label">总访问次数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ unique_ips }}</div>
+                <div class="stat-label">独立IP数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ today_logs }}</div>
+                <div class="stat-label">今日访问</div>
+            </div>
+        </div>
+
+        <div class="logs-section">
+            <div class="section-title">访问记录</div>
+            <div class="logs-list">
+                {% for log in logs %}
+                <div class="log-item" onclick="toggleDetails(this)">
+                    <div class="log-header">
+                        <span class="log-time">{{ log.time }}</span>
+                        <span class="log-ip">{{ log.ip }}</span>
+                    </div>
+                    <div class="log-content">
+                        <div class="log-info">
+                            <span class="log-label">设备类型</span>
+                            <span class="log-value">{{ log.device_type }}</span>
+                        </div>
+                        <div class="log-info">
+                            <span class="log-label">浏览器</span>
+                            <span class="log-value">{{ log.browser }}</span>
+                        </div>
+                        <div class="log-info">
+                            <span class="log-label">位置</span>
+                            {% if log.lat != 'N/A' and log.lng != 'N/A' %}
+                            <span class="log-value">
+                                <a href="{{ log.map_url }}" class="map-link" target="_blank">查看地图</a>
+                            </span>
+                            {% else %}
+                            <span class="log-value">N/A</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="log-details">
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">操作系统</span>
+                                <span class="detail-value">{{ log.os }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">平台</span>
+                                <span class="detail-value">{{ log.platform }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">CPU核心数</span>
+                                <span class="detail-value">{{ log.cpu_cores }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">设备内存</span>
+                                <span class="detail-value">{{ log.device_memory }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">屏幕分辨率</span>
+                                <span class="detail-value">{{ log.resolution }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">GPU</span>
+                                <span class="detail-value">{{ log.gpu }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">公网IP</span>
+                                <span class="detail-value">{{ log.public_ip }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">国家/地区</span>
+                                <span class="detail-value">{{ log.country }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">省份/州</span>
+                                <span class="detail-value">{{ log.region }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">城市</span>
+                                <span class="detail-value">{{ log.city }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">ISP</span>
+                                <span class="detail-value">{{ log.isp }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">时区</span>
+                                <span class="detail-value">{{ log.timezone }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>设备信息检测系统</p>
+        </div>
+    </div>
+
+    <script>
+        function toggleDetails(element) {
+            element.classList.toggle('active');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>科技感后台 - 访问日志管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background: #0f0c29;
+            color: #00ff88;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* 背景动画 */
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+        }
+        
+        .matrix {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            color: rgba(0, 255, 136, 0.05);
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        /* 容器样式 */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 顶部导航 */
+        .header {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #00ff88;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #00ff88, #00b36b);
+            color: #0f0c29;
+            border: none;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn:hover {
+            background: linear-gradient(135deg, #00b36b, #00804d);
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        /* 统计信息卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #00ff88;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            box-shadow: 0 0 25px rgba(0, 255, 136, 0.3);
+            transform: translateY(-5px);
+        }
+        
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 10px 0;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(0, 255, 136, 0.7);
+        }
+        
+        /* 日志表格 */
+        .table-container {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #00ff88;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.1);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+        }
+        
+        th {
+            background: rgba(0, 255, 136, 0.1);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        tr:hover {
+            background: rgba(0, 255, 136, 0.05);
+        }
+        
+        tr:nth-child(even) {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        /* 链接样式 */
+        a {
+            color: #00ff88;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-bottom: 1px dotted rgba(0, 255, 136, 0.5);
+        }
+        
+        a:hover {
+            color: #00b36b;
+            border-bottom-color: #00b36b;
+            text-shadow: 0 0 5px rgba(0, 255, 136, 0.5);
+        }
+        
+        /* 按钮列 */
+        .btn-small {
+            padding: 5px 10px;
+            background: linear-gradient(135deg, #00ff88, #00b36b);
+            color: #0f0c29;
+            border: none;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-small:hover {
+            background: linear-gradient(135deg, #00b36b, #00804d);
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+        }
+        
+        /* 刷新状态 */
+        .refresh-status {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #00ff88;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: rgba(0, 255, 136, 0.7);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(1.2);
+            }
+        }
+        
+        /* 详细信息弹窗 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background: rgba(15, 12, 41, 0.95);
+            margin: 5% auto;
+            padding: 30px;
+            border: 1px solid #00ff88;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+        }
+        
+        .close {
+            color: #00ff88;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .close:hover {
+            color: #00b36b;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+        
+        .modal h2 {
+            margin-bottom: 20px;
+            font-size: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .detail-item {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 3px solid #00ff88;
+        }
+        
+        .detail-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(0, 255, 136, 0.7);
+            margin-bottom: 5px;
+        }
+        
+        .detail-value {
+            font-size: 16px;
+            word-break: break-all;
+        }
+        
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #00ff88, #00b36b);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #00b36b, #00804d);
+        }
+        
+        /* 闪烁效果 */
+        .blink {
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% {
+                opacity: 1;
+            }
+            51%, 100% {
+                opacity: 0.5;
+            }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            table {
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景动画 -->
+    <div class="background-animation">
+        <div class="matrix" id="matrix"></div>
+    </div>
+    
+    <div class="container">
+        <!-- 顶部导航 -->
+        <div class="header">
+            <h1>科技感后台 - 访问日志管理</h1>
+            <div class="nav-buttons">
+                <button class="btn" onclick="refreshLogs()">立即刷新</button>
+                <a href="/tech-admin/logout" class="btn">退出</a>
+            </div>
+        </div>
+        
+        <!-- 刷新状态 -->
+        <div class="refresh-status">
+            <span>实时监控中 <span class="status-indicator"></span></span>
+            <span id="last-refresh">最后刷新: 刚刚</span>
+        </div>
+        
+        <!-- 统计信息 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ total_logs }}</div>
+                <div class="stat-label">总访问量</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ unique_ips }}</div>
+                <div class="stat-label">独立IP</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ today_logs }}</div>
+                <div class="stat-label">今日访问</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ logs|length }}</div>
+                <div class="stat-label">当前显示</div>
+            </div>
+        </div>
+        
+        <!-- 日志表格 -->
+        <div class="table-container">
+            <table id="logs-table">
+                <thead>
+                    <tr>
+                        <th>时间</th>
+                        <th>IP地址</th>
+                        <th>设备类型</th>
+                        <th>浏览器</th>
+                        <th>操作系统</th>
+                        <th>经纬度</th>
+                        <th>高德地图</th>
+                        <th>国家</th>
+                        <th>省份</th>
+                        <th>城市</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="logs-body">
+                    {% for log in logs %}
+                        <tr>
+                            <td>{{ log.time }}</td>
+                            <td>{{ log.ip }}</td>
+                            <td>{{ log.device_type }}</td>
+                            <td>{{ log.browser[:30] }}{% if log.browser|length > 30 %}...{% endif %}</td>
+                            <td>{{ log.os }}</td>
+                            <td>{{ log.lat }}, {{ log.lng }}</td>
+                            <td><a href="{{ log.map_url }}" target="_blank">查看地图</a></td>
+                            <td>{{ log.country }}</td>
+                            <td>{{ log.region }}</td>
+                            <td>{{ log.city }}</td>
+                            <td>
+                                <button class="btn-small" onclick="showDetails({{ loop.index0 }})">详情</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- 详细信息弹窗 -->
+    <div id="details-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>访问详情</h2>
+            <div id="modal-content" class="details-grid">
+                <!-- 动态生成详情内容 -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 全局日志数据
+        let logsData = {{ logs|tojson|safe }};
+        
+        // 矩阵雨效果
+        function createMatrix() {
+            const matrix = document.getElementById('matrix');
+            const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+            const columns = Math.floor(window.innerWidth / 20);
+            
+            // 创建列
+            for (let i = 0; i < columns; i++) {
+                const column = document.createElement('div');
+                column.style.position = 'absolute';
+                column.style.left = `${i * 20}px`;
+                column.style.top = `${Math.random() * -window.innerHeight}px`;
+                column.style.animation = `fall ${Math.random() * 3 + 2}s linear infinite`;
+                column.style.fontSize = '14px';
+                
+                // 创建字符
+                let text = '';
+                for (let j = 0; j < 20; j++) {
+                    text += chars[Math.floor(Math.random() * chars.length)] + '<br>';
+                }
+                column.innerHTML = text;
+                
+                matrix.appendChild(column);
+            }
+        }
+        
+        // 添加CSS动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fall {
+                0% {
+                    transform: translateY(-100%);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translateY(${window.innerHeight + 200}px);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // 初始化矩阵雨
+        createMatrix();
+        
+        // 显示详情弹窗
+        function showDetails(index) {
+            const log = logsData[index];
+            const modalContent = document.getElementById('modal-content');
+            
+            // 构建详情HTML
+            const details = `
+                <div class="detail-item">
+                    <div class="detail-label">访问时间</div>
+                    <div class="detail-value">${log.time}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">IP地址</div>
+                    <div class="detail-value">${log.ip}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">设备类型</div>
+                    <div class="detail-value">${log.device_type}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">浏览器</div>
+                    <div class="detail-value">${log.browser}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">操作系统</div>
+                    <div class="detail-value">${log.os}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">平台</div>
+                    <div class="detail-value">${log.platform}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">CPU核心数</div>
+                    <div class="detail-value">${log.cpu_cores}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">设备内存</div>
+                    <div class="detail-value">${log.device_memory} GB</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">屏幕分辨率</div>
+                    <div class="detail-value">${log.resolution}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">GPU</div>
+                    <div class="detail-value">${log.gpu}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">经纬度</div>
+                    <div class="detail-value">${log.lat}, ${log.lng}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">国家</div>
+                    <div class="detail-value">${log.country}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">省份</div>
+                    <div class="detail-value">${log.region}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">城市</div>
+                    <div class="detail-value">${log.city}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">ISP</div>
+                    <div class="detail-value">${log.isp}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">时区</div>
+                    <div class="detail-value">${log.timezone}</div>
+                </div>
+            `;
+            
+            modalContent.innerHTML = details;
+            document.getElementById('details-modal').style.display = 'block';
+        }
+        
+        // 关闭弹窗
+        function closeModal() {
+            document.getElementById('details-modal').style.display = 'none';
+        }
+        
+        // 点击弹窗外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('details-modal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+        
+        // 刷新日志
+        function refreshLogs() {
+            fetch('/tech-admin/api/logs')
+                .then(response => response.json())
+                .then(data => {
+                    logsData = data.logs;
+                    
+                    // 更新表格
+                    updateTable(data.logs);
+                    
+                    // 更新统计信息
+                    updateStats(data.total_logs, data.unique_ips, data.today_logs);
+                    
+                    // 更新刷新时间
+                    const now = new Date();
+                    const timeString = now.toLocaleTimeString();
+                    document.getElementById('last-refresh').textContent = `最后刷新: ${timeString}`;
+                })
+                .catch(error => {
+                    console.error('刷新日志失败:', error);
+                });
+        }
+        
+        // 更新表格
+        function updateTable(logs) {
+            const tbody = document.getElementById('logs-body');
+            tbody.innerHTML = '';
+            
+            logs.forEach((log, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${log.time}</td>
+                    <td>${log.ip}</td>
+                    <td>${log.device_type}</td>
+                    <td>${log.browser.slice(0, 30)}${log.browser.length > 30 ? '...' : ''}</td>
+                    <td>${log.os}</td>
+                    <td>${log.lat}, ${log.lng}</td>
+                    <td><a href="${log.map_url}" target="_blank">查看地图</a></td>
+                    <td>${log.country}</td>
+                    <td>${log.region}</td>
+                    <td>${log.city}</td>
+                    <td>
+                        <button class="btn-small" onclick="showDetails(${index})">详情</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        // 更新统计信息
+        function updateStats(total, unique, today) {
+            const statValues = document.querySelectorAll('.stat-value');
+            statValues[0].textContent = total;
+            statValues[1].textContent = unique;
+            statValues[2].textContent = today;
+            statValues[3].textContent = logsData.length;
+        }
+        
+        // 设置自动刷新（5秒）
+        setInterval(refreshLogs, 5000);
+        
+        // 初始化
+        refreshLogs();
+    </script>
+</body>
+</html>
